@@ -7,6 +7,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //code
   const { getNamedAccounts, deployments, network } = hre;
   const { deploy, log } = deployments;
+  // deployer = account deploying the contract
   const { deployer } = await getNamedAccounts();
 
   const chainId: number = network.config.chainId!;
@@ -31,7 +32,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: args, // price feed address
     log: true,
-    waitConfirmations: 6,
+    waitConfirmations: 1,
   });
   log(`FundMe deployed at ${fundMe.address}`);
 
