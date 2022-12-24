@@ -1,5 +1,5 @@
 // import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { assert, expect } from "chai";
 import { FundMe, MockV3Aggregator } from "../../typechain-types";
@@ -24,6 +24,8 @@ describe("fundMe", async () => {
     // deploy FundMe using hardhat-deploy()
     await deployments.fixture(["all"]);
     // getContract gets the most recently deployed FundMe contract
+    /* `fundMe` is a variable that is assigned to the `FundMe` contract that is deployed on the
+    hardhat network. */
     fundMe = await ethers.getContract("FundMe", deployer);
     mockV3Aggregator = await ethers.getContract("MockV3Aggregator", deployer);
   });
@@ -54,9 +56,69 @@ describe("fundMe", async () => {
       const responseEthValue = await fundMe.addressToAmountFunded(deployer);
       assert.equal(responseEthValue.toString(), sendValue.toString());
     });
+
+    it("add funder to array of funders", async () => {
+      /* Calling the `fund` function in the `FundMe` contract and sending the `sendValue` amount of
+      ether. */
+      await fundMe.fund({ value: sendValue });
+      /* `funders` is a getter function that returns an array of addresses. */
+      const funders = await fundMe.funders(0);
+      assert.equal(funders, deployer);
+    });
   });
 
-  //   describe("first", () => {
-  //     it("", async () => {});
-  //   });
+  describe("withdraw", () => {
+    // before we run a test, we need some eth in the wallet
+    beforeEach(async () => {
+      await fundMe.fund({ value: sendValue });
+    });
+    //
+    it("can withdraw eth from a single founder", async () => {
+      // Arrange
+      /* Getting the balance of the fundMe contract. */
+      /* `fundMe.provider` is the ethers provider that is connected to the hardhat network.
+      `fundMe.provider.getBalance(fundMe.address)` is a promise that returns the balance of the
+      fundMe
+      contract. */
+      const startingFundMeBalance = await fundMe.provider.getBalance(
+        fundMe.address
+      );
+      const startingDeployerBalance = await fundMe.provider.getBalance(
+        deployer
+      );
+      // Act
+      /* Calling the `withdraw` function in the `FundMe` contract. */
+      const txResponse = await fundMe.withdraw();
+      /* `txResponse` is a transaction object that contains the transaction hash.
+      `txResponse.wait(1)` is a promise that waits for the transaction to be mined.
+      `txReceipt` is the transaction receipt that contains the transaction hash, the block number,
+      the gas used, the logs, etc. */
+      const txReceipt = await txResponse.wait(1);
+      /* `fundMe.provider` is the ethers provider that is connected to the hardhat network.
+      `fundMe.provider.getBalance(fundMe.address)` is a promise that returns the balance of the
+      fundMe
+      contract. */
+      const endingFundMeBalance = await fundMe.provider.getBalance(
+        fundMe.address
+      );
+      // calculate gas cost
+      const { gasUsed, effectiveGasPrice } = txReceipt;
+      /* `gasUsed` is the amount of gas used in the transaction. `effectiveGasPrice` is the gas price
+      that was used in the transaction. `gasCost` is the amount of ether that was spent on the
+      transaction. */
+      const gasCost = gasUsed.mul(effectiveGasPrice);
+      /* `fundMe.provider` is the ethers provider that is connected to the hardhat network.
+      `fundMe.provider.getBalance(deployer)` is a promise that returns the balance of the deployer
+      account. */
+      const endingDeployerBal = await fundMe.provider.getBalance(deployer);
+
+      // Assert
+      /* Checking if the balance of the fundMe contract is 0. */
+      assert.equal(endingFundMeBalance.toString(), "0");
+      assert.equal(
+        startingFundMeBalance.add(startingDeployerBalance).toString(),
+        endingDeployerBal.add(gasCost).toString()
+      );
+    });
+  });
 });

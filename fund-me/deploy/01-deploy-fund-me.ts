@@ -35,7 +35,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations: 1,
   });
   log(`FundMe deployed at ${fundMe.address}`);
-
+  console.log("fundMe", fundMe);
   // if (chainId !== 31337 && process.env.ETHERSCAN_KEY) {
   //   await verify(fundMe.address, args);
   // }
