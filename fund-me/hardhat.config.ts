@@ -32,12 +32,13 @@ const config: HardhatUserConfig = {
     apiKey: "",
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
     outputFile: "gas-report.txt",
     noColors: true,
     // get usd gas value from coinmarketcap api
     currency: "USD",
     // coinmarketcap,
+    token: "ETH",
   },
   namedAccounts: {
     deployer: {
