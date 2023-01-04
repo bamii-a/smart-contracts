@@ -16,6 +16,7 @@ withdrawButton.onclick = withdraw;
 
 async function connect() {
   if (typeof window.ethereum !== "undefined") {
+    console.log("ethereum", ethereum);
     try {
       await ethereum.request({ method: "eth_requestAccounts" });
     } catch (error) {
@@ -32,11 +33,16 @@ async function connect() {
 
 async function withdraw() {
   if (typeof window.ethereum !== "undefined") {
+    /* Creating a provider object that is connected to the blockchain. */
     const provider = new ethers.providers.Web3Provider(window.ethereum);
+    /* Getting the signer from the provider. */
     const signer = provider.getSigner();
+    /* Creating a contract object that is connected to the blockchain. */
     const contract = new ethers.Contract(contractAddress, abi, signer);
     try {
+      /* Calling the withdraw function on the contract. */
       const txResponse = await contract.withdraw();
+      /* Waiting for the transaction to be mined. */
       await listenForTxMine(txResponse, provider);
     } catch (error) {
       console.log(error);
